@@ -1,8 +1,17 @@
-<h2>Editing Object for Sync </h2>
+<div class="section">
+  <h2>Editing Object for Sync </h2>
 
-<form action="/sources/<%=@object.source_id%>/updateobjects" method="post">
-<input type="Submit" value="Update Object Value"/><br/>
-Object ID <input name="attrvals[][object]" value="<%=@object.object%>"/><br/>
-Attribute Name <input name="attrvals[][attrib]" value="<%=@object.attrib%>"/><br/>
-Value <input name="attrvals[][value]" value="<%=@object.value%>"/><br/>
-</form>
+  <% form_tag "/sources/#{@object.source_id}/updateobjects", :method => :post do %>
+    <dl class="form">
+      <dt>Object ID</dt>
+      <dd><%= text_field_tag "attrvals[][object]", @object.object %></dd>
+      
+      <dt>Attribute Name</dt>
+      <dd><%= text_field_tag "attrvals[][attrib]", @object.attrib %></dd>
+      
+      <dt>Value</dt>
+      <dd><%= text_field_tag "attrvals[][value]", @object.value %></dd>
+    </dl>
+    <div class="submit"><%= submit_tag "Save changes" %></div>
+  <% end %>
+</div>

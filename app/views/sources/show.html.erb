@@ -1,31 +1,27 @@
-<h1><%= h(@source.name) %></h1>
-
-<%=link_to 'Edit source',{:action=>'edit',:id=>@source.id,:app_id=>@app.id}%><br>
-<%=link_to 'Refresh object-value records',{:action=>'refresh',:id=>@source.id}%><br>
-<%=link_to 'Create object-value record',{:action=>'newobject',:id=>@source.id}%><br>
-<%prevobj=""%>
-<table>
-  <tr><th>Object</th><th>Attribute</th><th>Value</th><th>Delete Objects</th></tr>
-  <%if @object_values%>
-<%  @object_values.each do |x|%>
-<%if x.object!=prevobj and prevobj!=""%>
-    <tr><td colspan=4><hr/></td></tr>
-<%end%>
-  <tr>
-  <td>
-<%if x.object!=prevobj%>
-<%=link_to x.object,{:action=>"editobject",:id=>@source.id,:object=>x.object,:attrib=>x.attrib}%>
-<%end%>
-</td><td>
-<%=link_to x.attrib,{:action=>"editobject",:id=>@source.id,:object=>x.object,:attrib=>x.attrib} %>
-
-</td><td><%=x.value%></td>
-  <td><%=link_to "X",{:action=>"deleteobjects",:id=>@source.id,:attrvals=>[{"object"=>x.object}]}%></td>
-  </tr>
-<%
-  prevobj=x.object
-end%>
-<%  end%>
-</table>
-
-<%= link_to "Back to applications list",apps_url %>
+<div class="section">
+  <h1><%= h(@source.name) %></h1>
+  
+  <div class="actions">
+    <%= link_to('Edit source', {:action => 'edit', :id => @source.id, :app_id => @app.id})%>
+    <%= link_to('Refresh records', {:action => 'refresh', :id => @source.id})%>
+    <%= link_to('Create record', {:action => 'newobject', :id => @source.id})%>
+  </div>
+  
+  <table class="list">
+    <tr>
+      <th>Object</th>
+      <th>Attribute</th>
+      <th>Value</th>
+    </tr>
+    <%- @object_values.group_by{ |ov| ov.object }.each do |object, object_values| -%>
+    <%- object_values.each_with_index do |value, index| -%>
+    <tr class="<%= "no-line" unless index == object_values.size-1 %>">
+      <td><%= link_to(value.object, {:action => "editobject", :id => @source.id, :object => value.object, :attrib => value.attrib}) if index.zero? %></td>
+      <td><%= link_to(value.attrib, {:action => "editobject", :id => @source.id, :object => value.object, :attrib => value.attrib}) %></td>
+      <td><%= value.value %></td>
+      <td><%= link_to("Delete", {:action => "deleteobjects", :id => @source.id, :attrvals => [{"object" => value.object}]}) %></td>
+    </tr>
+    <%- end -%>
+    <%- end -%>
+  </table>
+</div>

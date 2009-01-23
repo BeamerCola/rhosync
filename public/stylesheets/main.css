@@ -1,0 +1,152 @@
+body {
+  background-color: #efefef;
+  font-family: "lucida grande", lucida, verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+h1,h2,h3,h4,h5,h6 {
+  margin: 0 0 .5em 0;
+  padding: 0;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  width: 100%;
+}
+
+table th {
+  text-align: left;
+}
+
+.highlight {
+  background-color: #ffffcc;
+}
+
+div#head {
+  background-color: #000;
+  border-bottom: 3px solid #ccc;
+  color: #fff;
+  padding: 1em;
+  position: relative;
+}
+
+div#head h1 {
+  margin: 0;
+}
+
+div#head .actions {
+  position: absolute;
+  right: 1em;
+  top: 1em;
+}
+
+div#content {
+  padding: 1em;
+  width: 70%;
+}
+
+
+/* =========== */
+/* = Section = */
+/* =========== */
+
+div.section {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  margin-bottom: 2em;
+  padding: 1em;
+  position: relative;
+}
+
+div.section div.actions {
+  position: absolute;
+  top: 1em;
+  right: 1em;
+}
+
+div.section div.actions a {
+  background-color: #999;
+  color: #fff;
+  font-size: 11px;
+  font-weight: bold;
+  padding: .25em 1em;
+  text-decoration: none;
+  margin-left: .5em;
+  -webkit-border-radius: 8px;
+  -moz-border-radius: 8px;
+  -o-border-radius: 8px;
+}
+
+div.section div.actions a:hover {
+  background-color: #ccc;
+}
+
+/* ========= */
+/* = Forms = */
+/* ========= */
+
+dl.form dt,
+dl.form dd {
+  margin: 0;
+  padding: 0;
+}
+
+dl.form dt {
+  font-weight: bold;
+}
+
+dl.form dd {
+  margin-bottom: 1em;
+}
+
+dl.form input[type="text"] {
+  font-size: 18px;
+  padding: 4px;
+}
+
+dl.form textarea {
+  font-size: 14px;
+  padding: 4px;
+}
+
+/* ========== */
+/* = Tables = */
+/* ========== */
+
+table th.center,
+table td.center {
+  text-align: center;
+}
+
+table.list {
+  margin-bottom: 1em;
+}
+
+table.list td,
+table.list th {
+  padding: .5em;
+}
+
+table.list td {
+  border-bottom: 1px solid #ccc;
+}
+
+table.list tr.no-line td {
+  border-bottom-width: 0;
+}
+
+table.list td.actions {
+  text-align: right;
+}
+
+table.projects .project {
+  background-color: #efefef;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+table.projects .project a {
+  text-decoration: none;
+}

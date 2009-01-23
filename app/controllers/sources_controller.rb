@@ -287,7 +287,7 @@ class SourcesController < ApplicationController
   # GET /sources/new
   # GET /sources/new.xml
   def new
-    @source = Source.new
+    @source = Source.new(:pollinterval => 300, :priority => 3)
     @source.app=App.find params[:app] if params[:app]
     @apps=App.find_all_by_admin(current_user.login)
     respond_to do |format|

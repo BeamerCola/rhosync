@@ -1,20 +1,17 @@
-<h2>Creating Object for Sync </h2>
-Creates an object with up to five attribute value pairs
-<form action="/sources/<%=@source.id%>/createobjects" method="post">
-<input type="Submit" value="Create Object Value"/><br/>
-<input type="hidden" name="attrvals[][object]" value="temp1"/>
-Attribute Name <input name="attrvals[][attrib]" value=""/><br/>
-Value <input name="attrvals[][value]" value=""/><br/>
-<input type="hidden" name="attrvals[][object]" value="temp1"/>
-Attribute Name <input name="attrvals[][attrib]" value=""/><br/>
-Value <input name="attrvals[][value]" value=""/><br/>
-<input type="hidden" name="attrvals[][object]" value="temp1"/>
-Attribute Name <input name="attrvals[][attrib]" value=""/><br/>
-Value <input name="attrvals[][value]" value=""/><br/>
-<input type="hidden" name="attrvals[][object]" value="temp1"/>
-Attribute Name <input name="attrvals[][attrib]" value=""/><br/>
-Value <input name="attrvals[][value]" value=""/><br/>
-<input type="hidden" name="attrvals[][object]" value="temp1"/>
-Attribute Name <input name="attrvals[][attrib]" value=""/><br/>
-Value <input name="attrvals[][value]" value=""/><br/>
-</form>
+<div class="section">
+  <h2>Creating Object for Sync </h2>
+  <p>Creates an object with up to five attribute value pairs</p>
+  
+  <% form_tag "/sources/#{@source.id}/createobjects", :method => :post do %>
+    <dl class="form">
+      <%- 5.times do -%>
+      <dt>Attribute Name</dt>
+      <dd><%= text_field_tag "attrvals[][attrib]" %></dd>
+      <dt>Value</dt>
+      <dd><%= text_field_tag "attrvals[][value]" %></dd>
+      <dd><%= hidden_field_tag "attrvals[][object]", :value => "temp1" %>&nbsp;</dd>
+      <%- end -%>
+    </dl>
+    <div class="submit"><%= submit_tag "Create object value" %></div>
+  <% end %>
+</div>

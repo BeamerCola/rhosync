@@ -1,0 +1,65 @@
+<dl class="form">
+  <dt><%= form.label "Source Name" %></dt>
+  <dd><%= form.text_field :name, :size => 20 %></dd>
+  
+  <dt><%= form.label "Application" %></dt>
+  <dd>
+    <%= form.select :app_id, @apps.map{ |a| [a.name, a.id] } %>
+  </dd>
+  
+  <dt><%= form.label :url %></dt>
+  <dd><%= form.text_field :url, :size => 50 %></dd>
+  
+  <dt>
+    <%= form.label :login %>
+    <%= form.text_field :login, :size => 15 %>&nbsp;&nbsp;
+    <%= form.label :password %>
+    <%= form.text_field :password, :size => 15 %>
+  </dt>
+  <dd></dd>
+  
+  <dt><%= form.label "Poll Interval (seconds)" %></dt>
+  <dd><%= form.text_field :pollinterval, :size => 10 %></dd>
+  
+  <dt><%= form.label :priority %></dt>
+  <dd><%= form.text_field :priority, :size => 10 %></dd>
+</dl>
+
+<hr />
+
+<p>Provide the name of the source adapter class located in your lib directory which has login, query, sync, create, update, delete, and logoff methods.</p>
+
+<dl class="form">
+  <dt><%= form.label "Source adapter class" %></dt>
+  <dd><%= form.text_field :adapter, :size => 50 %></dd>
+</dl>
+
+<hr />
+
+<p>
+  <strong>OR</strong> enter source code for login, query, create, update, delete, logoff and sync in boxes below.<br />
+  Be careful to only use apostrophes (single quotes) for strings versus double quotes.
+</p>
+
+<dl class="form">
+  <dt><%= form.label :prolog, "Login" %></dt>
+  <dd><%= form.text_area :prolog, :rows => 10, :cols => 60 %></dd>
+
+  <dt><%= form.label :call, "Query Call" %></dt>
+  <dd><%= form.text_area :call, :rows => 10, :cols => 60 %></dd>
+
+  <dt><%= form.label :sync, "Sync query to object values" %></dt>
+  <dd><%= form.text_area :sync, :rows => 10, :cols => 60 %></dd>
+
+  <dt><%= form.label :createcall, "Create Call" %></dt>
+  <dd><%= form.text_area :createcall, :rows => 3, :cols => 60 %></dd>
+
+  <dt><%= form.label :updatecall, "Update Call" %></dt>
+  <dd><%= form.text_area :updatecall, :rows => 3, :cols => 60 %></dd>
+
+  <dt><%= form.label :deletecall, "Delete Call" %></dt>
+  <dd><%= form.text_area :deletecall, :rows => 3, :cols => 60 %></dd>
+
+  <dt><%= form.label "Logoff" %></dt>
+  <dd><%= form.text_area :epilog, :rows => 3, :cols => 60 %></dd>
+</dl>

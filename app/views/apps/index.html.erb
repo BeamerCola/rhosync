@@ -1,58 +1,52 @@
-<h3>Your Owned Apps</h3>
-<%=@current_user.login%><%if @apps and @apps.size>0%>, below are your RhoSync applications.
-<table>
-  <tr>
-    <th>Name</th>
-    <th>Description</th>
-    <th>Refresh</th>
-    <th>Delete</th>
-  </tr>
-  <% for app in @apps %>
-  <tr>
-    <td><%=link_to app.name, edit_app_path(app) %></td>
-    <td><%=h app.description %></td>
-    <td><%=link_to 'Refresh',{:action=>'refresh',:id=>app.id}%></td>
-    <td><%= link_to 'X', app, :confirm => 'Are you sure?', :method => :delete %></td>
-  </tr>
-  <% end %>
-</table>
-<%else%>
-, you have no owned apps.
-<%end%>
+<div class="section">
+  <h2>Your apps</h2>
 
-<%= link_to 'Create new app', new_app_path %><p/>
+  <%- if @apps && @apps.any? -%>
+  <table class="list projects">
+    <%- for app in @apps -%>
+    <tr class="<%= cycle(:even, :odd, :name => "projects") %>">
+      <td class="project"><%= link_to(app.name, edit_app_path(app)) %></td>
+      <td><%= h(app.description) %></td>
+      <td class="actions">
+        <%= link_to('Refresh', {:action => 'refresh',:id => app.id})%> |
+        <%= link_to('Delete', app, :confirm => 'Are you sure?', :method => :delete) %>
+      </td>
+    </tr>
+    <%- end -%>
+  </table>
+  <%- else -%>
+  <p>You don't have any apps.</p>
+  <%- end -%>
+  
+  <div class="actions">
+    <%= link_to('Create new app', new_app_path) %>
+  </div>
+</div>
 
-<p/>
-<h3>Your Subscribed Apps</h3>
-<table>
-<%if @subapps and @subapps.size>0%>These are the apps you are subscribed to.
-  <tr>
-    <th>Name</th>
-    <th>Description</th>
-    <th>Credentials</th>
-  </tr>
-<%for app in @subapps %>
-<tr>
-  <td><%=app.name %></td>
-  <td><%=h app.description %></td>
-  <td>
-  <%sub=Membership.find_by_app_id_and_user_id app.id,@current_user.id
-    if sub.credential%>
-  <%=link_to "Edit", {:action=>"getcred",:id=>app.id,:sub_id=>sub.id}%>
-  <%else%>
-  <%=link_to "Create",{:action=>"getcred",:id=>app.id,:sub_id=>sub.id}%>
-  <%end%>
-  </td>
-</tr>
-  <% end %>
-  <%else%>
-  You have no subscribed apps.
-  <%end%>
-</table>
-<p/>
-<%if @current_user.nil? %><br/>
-<%= link_to 'Login',{:controller=>'sessions',:action=>'new'}%><br/>
-<%= link_to 'Register',{:controller=>'users',:action=>'new'}%><br/>
-<%else%>
-<%= link_to 'Logout',{:controller=>'sessions',:action=>'destroy'}%><br/>
-<%end%>
+<div class="section">
+  <h3>Your Subscribed Apps</h3>
+  <%- if @subapps && @subapps.any? -%>
+  <table class="list">
+    <tr>
+      <th>Name</th>
+      <th>Description</th>
+      <th>Credentials</th>
+    </tr>
+    <%- for app in @subapps -%>
+    <tr>
+      <td><%= app.name %></td>
+      <td><%= h(app.description) %></td>
+      <td>
+      <%- if (sub = Membership.find_by_app_id_and_user_id app.id,@current_user.id).credential -%>
+      <%= link_to("Edit", {:action => "getcred",:id => app.id,:sub_id => sub.id}) %>
+      <%- else -%>
+      <%= link_to("Create", {:action => "getcred",:id => app.id, :sub_id => sub.id}) %>
+      <%- end -%>
+      </td>
+    </tr>
+    <%- end -%>
+  </table>
+  <%- else -%>
+    <p>You have not subscribed to any apps</p>
+  <%- end -%>
+</div>

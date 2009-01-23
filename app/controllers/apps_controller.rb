@@ -76,7 +76,7 @@ class AppsController < ApplicationController
   # GET /apps/1/edit
   def edit
     @app = App.find(params[:id]) 
-    @users = User.find :all
+    @users = User.find(:all) - @app.users
   end
   
   # subscribe specified subscriber to specified app ID
