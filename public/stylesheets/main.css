@@ -101,7 +101,8 @@ dl.form dd {
   margin-bottom: 1em;
 }
 
-dl.form input[type="text"] {
+dl.form input[type="text"],
+dl.form input[type="password"] {
   font-size: 18px;
   padding: 4px;
 }

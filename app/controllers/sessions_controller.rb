@@ -38,11 +38,8 @@ class SessionsController < ApplicationController
       note_failed_signin
       @login       = params[:login]
       @remember_me = params[:remember_me]
-      msg="Failed to login (bad password?)"
-      flash[:notice] = msg
-      @error=msg
+      flash[:notice] = "Failed to login (bad password?)"
       render :action => 'new'
-
     end
   end
 

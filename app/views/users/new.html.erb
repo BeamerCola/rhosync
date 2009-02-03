@@ -1,19 +1,21 @@
-<h1>Sign up as a new user</h1>
-<% @user.password = @user.password_confirmation = nil %>
+<div class="section">
+  <h1>Sign up as a new user</h1>
 
-<%= error_messages_for :user %>
-<% form_for :user,:url=>{:controller=>"users",:action=>"create"} do |f| -%>
-<p><%= label_tag 'login' %><br/>
-<%= f.text_field :login %></p>
+  <% form_for @user do |f| -%>
+    <%= f.error_messages %>
+    <dl class="form">
+      <dt><%= label_tag :login %></dt>
+      <dd><%= f.text_field :login %></dd>
 
-<p><%= label_tag 'email' %><br/>
-<%= f.text_field :email %></p>
+      <dt><%= label_tag :email %></dt>
+      <dd><%= f.text_field :email %></dd>
 
-<p><%= label_tag 'password' %><br/>
-<%= f.password_field :password %></p>
+      <dt><%= label_tag :password %></dt>
+      <dd><%= f.password_field :password %></dd>
 
-<p><%= label_tag 'password_confirmation', 'Confirm Password' %><br/>
-<%= f.password_field :password_confirmation %></p>
-
-<p><%= submit_tag 'Sign up' %></p>
-<% end -%>
+      <dt><%= label_tag :password_confirmation, "Confirm Password" %></dt>
+      <dd><%= f.password_field :password_confirmation %></dd>
+    </dl>
+    <div class="submit"><%= submit_tag "Sign up" %></div>
+  <% end -%>
+</div>
