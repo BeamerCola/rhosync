@@ -14,10 +14,6 @@ class LighthouseTicketVersions < SourceAdapter
   
   include RestAPIHelpers
   include ActiveSupport::Inflector
-  
-  def initialize(source)
-    super
-  end
 
   def query
     log "LighthouseTicketVersions query"
@@ -29,7 +25,7 @@ class LighthouseTicketVersions < SourceAdapter
       lighthouseTickets.id])
           
     tickets.each do |ticket|  
-      uri = URI.parse(@source.url)
+      uri = URI.parse(base_url)
       project, number = split_id(ticket.object)    
       req = Net::HTTP::Get.new("/projects/#{project}/tickets/#{number}.xml", 'Accept' => 'application/xml')
       req.basic_auth @source.credential.token, "x"
@@ -46,7 +42,11 @@ class LighthouseTicketVersions < SourceAdapter
   end
 
   def sync
-    log "LighthouseTicketVersions sync, with #{@result.length} results"
+    if @result
+      log "LighthouseTicketVersions sync, with #{@result.length} results"
+    else
+      log "LighthouseTicketVersions sync, ERROR @result nil" and return
+    end
     
     @result.each do |version|
       # construct unique ID for ticket versions, tickets are identified by project-id/number in lighthouse
@@ -57,15 +57,15 @@ class LighthouseTicketVersions < SourceAdapter
       # here we just want to know who made the change and when, other fields we dont save to DB
       %w(updated-at user-id).each do |key|
         value = version[key] ? version[key][0] : ""
-        add_triple(@source.id, id, key.gsub('-','_'), value)
+        add_triple(@source.id, id, key.gsub('-','_'), value, @source.current_user.id)
         # convert "-" to "_" because "-" is not valid in ruby variable names   
       end    
       
       # process the "diffable-attributes"
       change_msg = calculate_change_history(version, YAML::load(version['diffable-attributes'][0]['content']))
             
-      add_triple(@source.id, id, "changes", change_msg)
-      add_triple(@source.id, id, "ticket_id", "#{version['project-id'][0]['content']}-#{version['number'][0]['content']}")    
+      add_triple(@source.id, id, "changes", change_msg, @source.current_user.id)
+      add_triple(@source.id, id, "ticket_id", "#{version['project-id'][0]['content']}-#{version['number'][0]['content']}", @source.current_user.id)    
     end
   end
   
@@ -100,19 +100,21 @@ class LighthouseTicketVersions < SourceAdapter
             lighthouseMilestones = Source.find_by_adapter("LighthouseMilestones")
             
             unless value_pre.blank?
-              milestone = ObjectValue.find(:first, :conditions => 
+              if milestone = ObjectValue.find(:first, :conditions => 
                 ["source_id = ? and update_type = 'query' and attrib = 'title' and object = ?", 
                   lighthouseMilestones.id, value_pre])
               
-              value_pre = milestone.value
+                  value_pre = milestone.value
+              end
             end
           
             unless value_post.blank?
-              milestone = ObjectValue.find(:first, :conditions => 
+              if milestone = ObjectValue.find(:first, :conditions => 
                 ["source_id = ? and update_type = 'query' and attrib = 'title' and object = ?", 
                 lighthouseMilestones.id, value_post])
               
-              value_post = milestone.value
+                value_post = milestone.value
+              end
             end
           
           elsif (key == "assigned-user-id")
@@ -120,19 +122,21 @@ class LighthouseTicketVersions < SourceAdapter
             lighthouseUsers = Source.find_by_adapter("LighthouseUsers")
             
             unless value_pre.blank?
-              milestone = ObjectValue.find(:first, :conditions => 
+              if assigned = ObjectValue.find(:first, :conditions => 
                 ["source_id = ? and update_type = 'query' and attrib = 'name' and object = ?", 
                   lighthouseUsers.id, value_pre])
               
-              value_pre = milestone.value
+                  value_pre = assigned.value
+              end
             end
           
             unless value_post.blank?
-              milestone = ObjectValue.find(:first, :conditions => 
+              if assigned = ObjectValue.find(:first, :conditions => 
                 ["source_id = ? and update_type = 'query' and attrib = 'name' and object = ?", 
                 lighthouseUsers.id, value_post])
               
-              value_post = milestone.value
+                value_post = assigned.value
+              end
             end
             
           end

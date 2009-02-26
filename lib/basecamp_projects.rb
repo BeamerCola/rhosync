@@ -3,10 +3,6 @@ class BasecampProjects
   
   include RestAPIHelpers
 
-  def initialize(source)
-    @source=source
-  end
-
   def login
     # intentionally left blank
   end
@@ -27,10 +23,10 @@ class BasecampProjects
       id = project["id"][0]["content"]      
     
       %w(name status).each do |key|
-        add_triple(@source.id, id, key, project[key][0])      
+        add_triple(@source.id, id, key, project[key][0], @source.current_user.id)      
       end
       
-      add_triple(@source.id, id, "company_id", project["company"][0]["id"][0]["content"])
+      add_triple(@source.id, id, "company_id", project["company"][0]["id"][0]["content"], @source.current_user.id)
     end
   end
 

@@ -11,14 +11,21 @@
       <dd><%= f.text_field :name %></dd>
       
       <dt><%= f.label :description %></dt>
-      <dd><%= f.text_area :description,:rows=>3,:cols=>40  %></dd>
+      <dd><%= f.text_area :description, :rows => 2, :cols => 40 %></dd>
+      
+      <dd><%= f.check_box :anonymous %> <%= f.label :anonymous, "Anonymous (Allow All Users)" %></dd>
     </dl>
-    <div class="submit"><%= f.submit "Save changes" %></div>
+    <%= f.submit "Update Application Settings" %>
   <% end %>
 </div>
 
 <div class="section">
-  <h2>Sources</h2>
+  <h3>Sources <%=link_to "(Refresh All)",:controller=>"apps",:action=>"refresh",:id=>@app.id%></h3>
+  
+  <div class="actions">
+    <%= link_to("Add Source", :controller => "sources", :action => "new", :app => @app.id) %>
+  </div>
+  
   <table class="list">
     <tr>
       <th>Name</th>
@@ -26,39 +33,50 @@
     </tr>
     <%- @app.sources.each do |source| -%>
     <tr>
-      <td><%= link_to(source.name, edit_source_path(source,:app_id=>@app.id))%></td>
+      <td><strong><%= link_to(source.name, edit_source_path(source, :app_id => @app.id))%></strong></td>
       <td class="center"><%= source.priority || "-" %></td>
-      <td class="actions">
-        <%= link_to("Delete", app_source_path(@app,source), :confirm => 'Are you sure?', :method => :delete) %> |
-        <%= link_to "Refresh", :controller => "sources", :action => "refresh", :id => source.id%>
-      </td>
+      <td class="actions"><%= link_to("Delete", app_source_path(@app, source), :confirm => "Are you sure?", :method => :delete) %></td>
+    </tr>
+    <%- end -%>
+  </table>
+</div>
+
+<div class="section">
+  <h2>Subscribed users</h2>
+  
+  <div class="actions">
+    <%= link_to 'Back to applications list', apps_path %>
+  </div>
+  
+  <table class="list">
+    <%- @app.users.each do |user| -%>
+    <tr>
+      <td><strong><%= user.login %></strong></td>
+      <td class="actions"><%= link_to("Unsubscribe", {:action => :unsubscribe, :id => @app.id, :subscriber => user.login}) %></td>
     </tr>
     <%- end -%>
   </table>
   
-  <div class="actions">
-    <%= link_to("Refresh All", :controller => "apps", :action => "refresh", :id => @app.id) %>
-    <%= link_to("Add Source", :controller => "sources", :action => "new", :app => @app.id) %>
-  </div>
-</div>
+  <h3>Subscribe new user</h3>
 
-<div class="section">
-  <h2>Existing Subscribers</h2>
-  <ul>
-    <%- @app.users.each do |user| -%>
-    <li>
-      <%= user.login %>
-      <%= link_to("(unsubscribe)", {:action => :unsubscribe, :id => @app.id, :subscriber => user.login})%>
-    </li>
-    <%- end -%>
-  </ul>
-  
-  <%- if @users.any? -%>
-  <% form_for(:subscribe, @app, :url => {:controller => "apps", :action => "subscribe", :id => @app.id}) do |f| %>
-    <%= select :subscriber, :select, @users.map(&:login), {}, {:name => "subscriber"} %>
-    <%= f.submit "Subscribe" %>
-  <%- end -%>
-  <%- else -%>
-    <span class="highlight">All users are subscribed to this app.</span>
+  <% form_for(:subscribe, :url => {:controller => "apps", :action => "subscribe", :id => @app.id}) do |f| %>
+    <%= select_tag "subscriber", @users.map{ |u| content_tag(:option, u.login, :value => u.id) } %>
+    <%= f.submit "Subscribe User" %>
+    <%= link_to_function "Optional credentials", visual_effect(:appear, "subscriber-credentials") %>
+    
+    <fieldset id="subscriber-credentials" class="grey" style="display: none;">
+      <legend>Optional credentials</legend>
+      <dl class="form">
+        <dt>URL</dt>
+        <dd><%= text_field_tag :url, "", :size => 30 %></dd>
+      
+        <dt>Login</dt>
+        <dd><%= text_field_tag :login, "", :size => 30 %></dd>
+
+        <dt>Password</dt>
+        <dd><%= text_field_tag :password, "", :size => 30 %></dd>
+      </dl>
+      <%= f.submit "Subscribe User" %>
+    </fieldset>
   <%- end -%>
 </div>

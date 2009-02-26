@@ -11,6 +11,7 @@ class SessionsController < ApplicationController
   
   def client_login
     logout_keeping_session!
+    @app=App.find params[:app_id]
     user = User.authenticate(params[:login], params[:password])
     if user
       self.current_user = user
@@ -23,6 +24,7 @@ class SessionsController < ApplicationController
 
   def create
     logout_keeping_session!
+
     user = User.authenticate(params[:login], params[:password])
     if user
       # Protects against session fixation attacks, causes request forgery
@@ -30,6 +32,7 @@ class SessionsController < ApplicationController
       # button. Uncomment if you understand the tradeoffs.
       # reset_session
       self.current_user = user
+      @current_user=user
       new_cookie_flag = (params[:remember_me] == "1")
       handle_remember_cookie! new_cookie_flag
       redirect_back_or_default('/')
@@ -41,6 +44,7 @@ class SessionsController < ApplicationController
       flash[:notice] = "Failed to login (bad password?)"
       render :action => 'new'
     end
+
   end
 
   def destroy

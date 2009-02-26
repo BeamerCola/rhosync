@@ -16,6 +16,7 @@ class AppsController < ApplicationController
     @sub.credential.login=params[:login]
     @sub.credential.password=params[:password]
     @sub.credential.token=params[:token]
+    @sub.credential.url=params[:url]
     @sub.credential.save
     @sub.save
     flash[:notice]="Updated credential for membership"
@@ -25,13 +26,15 @@ class AppsController < ApplicationController
   # GET /apps
   # GET /apps.xml
   def index
-    login=current_user.login.downcase
+    login=@current_user.login.downcase 
+    
     @apps = App.find_all_by_admin login
     if @apps.nil?
       flash[:notice]="You have no existing apps"
     end
     apps=App.find :all
-    @subapps=apps.reject { |app| !current_user.apps.index(app) }
+    @subapps=apps.reject { |app| app.anonymous!=1 and !@current_user.apps.index(app) }
+    
     respond_to do |format|
       format.html # index.html.erb
       format.xml  { render :xml => @apps }
@@ -81,9 +84,18 @@ class AppsController < ApplicationController
   
   # subscribe specified subscriber to specified app ID
   def subscribe
-    user=User.find_by_login params[:subscriber]
+    user=User.find(params[:subscribe][:subscriber])
     @app=App.find(params[:id])
     @app.users << user
+    if (params[:url]) # we have a URL of a credential
+      @sub=Membership.find_by_user_id_and_app_id user.id,@app.id  # find the just created membership subscription
+      @sub.credential=Credential.new
+      @sub.credential.url=params[:url]
+      @sub.credential.login=params[:login]
+      @sub.credential.password=params[:password]
+      @sub.credential.save
+      @sub.save
+    end
     redirect_to :action=>:edit
   end
 

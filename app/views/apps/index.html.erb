@@ -24,8 +24,9 @@
 </div>
 
 <div class="section">
-  <h3>Your Subscribed Apps</h3>
-  <%- if @subapps && @subapps.any? -%>
+  <h2>Your Subscribed Apps</h2>
+  <!-- These are the apps you are subscribed to. -->
+  <%- if @subapps.any? -%>
   <table class="list">
     <tr>
       <th>Name</th>
@@ -34,19 +35,21 @@
     </tr>
     <%- for app in @subapps -%>
     <tr>
-      <td><%= app.name %></td>
-      <td><%= h(app.description) %></td>
+      <td><%=link_to app.name, edit_app_path(app)%></td>
+      <td><%=h app.description %></td>  
+      <%- if app.anonymous != 1 && (sub = Membership.find_by_app_id_and_user_id app.id, @current_user.id) -%>
       <td>
-      <%- if (sub = Membership.find_by_app_id_and_user_id app.id,@current_user.id).credential -%>
-      <%= link_to("Edit", {:action => "getcred",:id => app.id,:sub_id => sub.id}) %>
-      <%- else -%>
-      <%= link_to("Create", {:action => "getcred",:id => app.id, :sub_id => sub.id}) %>
-      <%- end -%>
+        <%- if sub.credential -%>
+          <%= link_to("Edit", {:action => "getcred", :id => app.id, :sub_id => sub.id}) %>
+        <%- else -%>
+          <%= link_to("Create", {:action => "getcred", :id => app.id, :sub_id => sub.id}) %>
+        <%- end -%>
       </td>
+      <%- end -%>
     </tr>
     <%- end -%>
   </table>
   <%- else -%>
-    <p>You have not subscribed to any apps</p>
+  <p>You have no subscribed apps.</p>
   <%- end -%>
 </div>

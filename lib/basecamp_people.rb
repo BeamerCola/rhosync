@@ -4,10 +4,6 @@ class BasecampPeople
   attr_accessor :client
   
   include RestAPIHelpers
-  
-  def initialize(source)
-    @source=source
-  end
 
   def login
     #left intentionally blank
@@ -55,7 +51,7 @@ class BasecampPeople
       id = person['id'][0]['content']
           
       %w(first-name last-name email-address).each do |key|
-          add_triple(@source.id, id, key.gsub('-','_'), person[key][0])      
+          add_triple(@source.id, id, key.gsub('-','_'), person[key][0], @source.current_user.id)      
       end
     end
   end

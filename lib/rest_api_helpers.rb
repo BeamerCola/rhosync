@@ -5,6 +5,10 @@
 
 module RestAPIHelpers
   
+  def base_url
+    @source.credential.url || @source.url
+  end
+  
   # "recover parts of id 1000-6 => 1000, 6"
   def split_id(idstring)
     idstring =~/(\d*)\-(\d*)/
@@ -42,13 +46,15 @@ module RestAPIHelpers
   end
   
   # make an ObjectValue triple for rhosync
-  def add_triple(source_id, object_id, attrib, value)
+  def add_triple(source_id, object_id, attrib, value, user_id)
+    return if value.blank?
+    
     o = ObjectValue.new
     o.source_id=source_id
     o.object=object_id
     o.attrib=attrib
     o.value = eval_value(value)
-
+    o.user_id = user_id
     
     # values cannot contain double quotes, convert to single
     # TBD: there might be other characters as well that need escaping

@@ -21,10 +21,6 @@
 class LighthouseMilestones < SourceAdapter
   
   include RestAPIHelpers
-  
-  def initialize(source)
-    super
-  end
 
   def query
     log "LighthouseMilestones query"
@@ -38,9 +34,8 @@ class LighthouseMilestones < SourceAdapter
     @result = []
       
     projects.each do |project|  
-      uri = URI.parse(@source.url)
+      uri = URI.parse(base_url)
       url = "/projects/#{project.object}/milestones.xml"
-      log url
       req = Net::HTTP::Get.new(url, 'Accept' => 'application/xml')      
       req.basic_auth @source.credential.token, "x"
 
@@ -48,7 +43,6 @@ class LighthouseMilestones < SourceAdapter
         http.set_debug_output $stderr
         http.request(req)
       end
-      log response.body
       xml_data = XmlSimple.xml_in(response.body); 
 
       if xml_data["milestone"]
@@ -61,15 +55,19 @@ class LighthouseMilestones < SourceAdapter
   end
 
   def sync
-    log "LighthouseMilestones sync, with #{@result.length} results"
-    
-    @result.each do |user|
-      id = user["id"][0]["content"]
+    if @result
+      log "LighthouseMilestones sync, with #{@result.length} results"
+    else
+      log "LighthouseMilestones sync, ERROR @result nil" and return
+    end
+        
+    @result.each do |milestone|      
+      id = milestone["id"][0]["content"]
       
       # iterate over all possible values, if the value is not found we just pass "" in to rhosync
       %w(project-id title due-on).each do |key|
-        value = user[key] ? user[key][0] : ""
-        add_triple(@source.id, id, key.gsub('-','_'), value)
+        value = milestone[key] ? milestone[key][0] : ""
+        add_triple(@source.id, id, key.gsub('-','_'), value, @source.current_user.id)
         # convert "-" to "_" because "-" is not valid in ruby variable names   
       end
     end

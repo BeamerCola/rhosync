@@ -14,10 +14,6 @@
 class LighthouseUsers < SourceAdapter
   
   include RestAPIHelpers
-  
-  def initialize(source)
-    super
-  end
 
   def query
     log "LighthouseUsers query"
@@ -31,7 +27,7 @@ class LighthouseUsers < SourceAdapter
       projectSource.id])
       
     projects.each do |project|  
-      uri = URI.parse(@source.url)
+      uri = URI.parse(base_url)
       url = "/projects/#{project.object}/memberships.xml"
       req = Net::HTTP::Get.new(url, 'Accept' => 'application/xml')      
       req.basic_auth @source.credential.token, "x"
@@ -40,7 +36,6 @@ class LighthouseUsers < SourceAdapter
         http.set_debug_output $stderr
         http.request(req)
       end
-      log response.body
       xml_data = XmlSimple.xml_in(response.body); 
 
       # <memberships type="array">
@@ -66,9 +61,8 @@ class LighthouseUsers < SourceAdapter
     
     #then for each one - GET /users/#{ID}.xml
     user_ids.each do |user_id|
-      uri = URI.parse(@source.url)
+      uri = URI.parse(base_url)
       req = Net::HTTP::Get.new("/users/#{user_id}.xml", 'Accept' => 'application/xml')
-      log "/users/#{user_id}.xml"
       req.basic_auth @source.credential.token, "x"
       response = Net::HTTP.start(uri.host,uri.port) do |http|
         http.set_debug_output $stderr
@@ -83,7 +77,11 @@ class LighthouseUsers < SourceAdapter
   end
 
   def sync
-    log "LighthouseUsers sync, with #{@result.length} results"
+    if @result
+      log "LighthouseUsers sync, with #{@result.length} results"
+    else
+      log "LighthouseUsers sync, ERROR @result nil" and return
+    end
     
     @result.each do |user|
       id = user["id"][0]["content"]
@@ -91,7 +89,7 @@ class LighthouseUsers < SourceAdapter
       # iterate over all possible values, if the value is not found we just pass "" in to rhosync
       %w(job name website).each do |key|
         value = user[key] ? user[key][0] : ""
-        add_triple(@source.id, id, key.gsub('-','_'), value)
+        add_triple(@source.id, id, key.gsub('-','_'), value, @source.current_user.id)
         # convert "-" to "_" because "-" is not valid in ruby variable names   
       end
     end

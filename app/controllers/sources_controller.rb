@@ -3,9 +3,6 @@ require 'yaml'
 require 'open-uri'
 require 'net/http'
 require 'net/https'
-require 'soap/wsdlDriver'
-require 'defaultDriver.rb'
-require 'soap/mapping'
 
 class SourcesController < ApplicationController
 
@@ -16,19 +13,28 @@ class SourcesController < ApplicationController
   # if a :last_update parameter is supplied then only show data that has been
   # refreshed (retrieved from the backend) since then
   protect_from_forgery :only => [:create, :delete, :update]
+  
+  def noaccess
+  end
 
   # ONLY SUBSCRIBERS MAY ACCESS THIS!
   def show
     @source=Source.find params[:id]
     @app=@source.app
-    check_access(@app)
-    @source.refresh(@current_user) if @source.needs_refresh
+    check_access(@app)  
+
+    @source.refresh(@current_user) if params[:refresh] || @source.needs_refresh 
+    objectvalues_cmd="select * from object_values where update_type='query' and source_id="+params[:id]
+    objectvalues_cmd << " and user_id=" + @source.credential.user.id.to_s if @source.credential
+    objectvalues_cmd << " order by object,attrib"
     # if client_id is provided, return only relevant object for that client
     if params[:client_id] and params[:id]
-      @object_values=process_objects_for_client(params[:client_id], params[:id]) 
+      @object_values=process_objects_for_client(@source, params[:client_id]) 
     else
-      @object_values=ObjectValue.find_all_by_update_type_and_source_id "query",params[:id],:order=>"object"
+      @object_values=ObjectValue.find_by_sql objectvalues_cmd
     end
+    @object_values.delete_if {|o| o.value.nil? || o.value.size<1 }  # don't send back blank or nil OAV triples
+    logger.info "Sending #{@object_values.length} records to #{params[:client_id]}" if params[:client_id] and @object_values
     respond_to do |format|
       format.html
       format.xml  { render :xml => @object_values}
@@ -36,15 +42,35 @@ class SourcesController < ApplicationController
     end
   end
   
-  # this is effectively the "callback" or notify function that needs to be called from the backend app
-  # this is installed by the "set_callback" method that should be written for source adapters when appropriate
-  def refresh
+  # quick synchronous simple query that doesn't hit the database
+  # parameters:
+  #   question
+  def ask
     @source=Source.find params[:id]
-    @source.refresh(@current_user) if @source
+    @app=@source.app
+    if params[:question]
+      @object_values=@source.ask(@current_user,params[:question])
+      @object_values.delete_if {|o| o.value.nil? || o.value.size<1 }  # don't send back blank or nil OAV triples
+    else
+      raise "You need to provide a question to answer"
+    end
+
+    @object_values.collect! { |x|
+       x.id = x.hash_from_data(x.attrib,x.object,x.update_type,x.source_id,x.user_id,x.value)
+       x.db_operation = 'insert'
+       x.update_type = 'query'
+       x
+    }
+    respond_to do |format|
+      format.html { render :action=>"show"}
+      format.xml  { render :action=>"show"}
+      format.json { render :action=>"show"}
+    end
   end
 
+
   # return the metadata for the specified source
-  # ONLY FOR SUBSCRIBERS/ADIN
+  # ONLY FOR SUBSCRIBERS/ADMIN
   def attributes
     @source=Source.find params[:id]
     check_access(@source.app)
@@ -103,17 +129,10 @@ class SourcesController < ApplicationController
        o.value=x["value"]
        o.update_type="create"
        o.source=@source
+       o.user_id=current_user.id
        o.save
        # add the created ID + created_at time to the list
        objects[o.id]=o.created_at if not objects.keys.index(o.id)  # add to list of objects
-       # add to the client_map so next refresh will delete this temporary object
-       if @client
-         map = ClientMap.create(:client_id => @client.client_id,
-                                :object_value_id => o.id,
-                                :object_value_object => o.object,
-                                :object_value_attrib => o.attrib,
-                                :object_value_value => o.value)
-       end
     end
 
     respond_to do |format|
@@ -151,6 +170,7 @@ class SourcesController < ApplicationController
        o.attrib=x["attrib"]
        o.value=x["value"]
        o.update_type="update"
+       o.user_id=current_user.id
        o.source=@source
        o.save
        # add the created ID + created_at time to the list
@@ -184,6 +204,7 @@ class SourcesController < ApplicationController
        o.value=x["value"] if x["value"]
        o.update_type="delete"
        o.source=@source
+       o.user_id=current_user.id
        o.save
        # add the created ID + created_at time to the list
        objects[o.id]=o.created_at if not objects.keys.index(o.id)  # add to list of objects
@@ -249,22 +270,7 @@ class SourcesController < ApplicationController
   end
 
 
-  # this connects to the web service of the given source backend and:
-  # - does a login
-  # - does creating, updating, deleting of records as required
-  # - reads (queries) records from the backend
-  # - logs off
-  #
-  # It should be invoked on a schedcurrent_useruled basis by some admin process,
-  # for example by using CURL.  It should also be done with a separate instance
-  # than the one used to service create, update and delete calls from the client
-  # device.
-  def refresh
-    source=Source.find params[:id]
-    check_access(source.app)
-    source.refresh @current_user
-    redirect_to :action=>"show",:id=>source.id, :app_id=>source.app.id
-  end
+
   
   # GET /sources
   # GET /sources.xml

@@ -33,16 +33,12 @@
 class LighthouseProjects < SourceAdapter
   
   include RestAPIHelpers
-  
-  def initialize(source)
-    super(source)
-  end
 
   def query
     log "LighthouseProjects query"
     
-    uri = URI.parse(@source.url+"/projects.xml")
-    req = Net::HTTP::Get.new(uri.path, 'Accept' => 'application/xml')
+    uri = URI.parse(base_url)
+    req = Net::HTTP::Get.new("/projects.xml", 'Accept' => 'application/xml')
     req.basic_auth @source.credential.token, "x"
     
     response = Net::HTTP.start(uri.host,uri.port) do |http|
@@ -53,7 +49,11 @@ class LighthouseProjects < SourceAdapter
   end
 
   def sync
-    log "LighthouseProjects sync, with #{@result.length} results"
+    if @result
+      log "LighthouseProjects sync, with #{@result.length} results"
+    else
+      log "LighthouseProjects sync, ERROR @result nil" and return
+    end
     
     @result.each do |project|
       id = project["id"][0]["content"]
@@ -61,11 +61,48 @@ class LighthouseProjects < SourceAdapter
       # iterate over all possible values, if the value is not found we just pass "" in to rhosync
       %w(created-at default-assigned-user-id default-milestone-id description name public updated-at open-states-list closed-states-list).each do |key|
         value = project[key] ? project[key][0] : ""
-        add_triple(@source.id, id, key.gsub('-','_'), value)
+        add_triple(@source.id, id, key.gsub('-','_'), value, @source.current_user.id)
         # convert "-" to "_" because "-" is not valid in ruby variable names   
       end
     end
   end
   
+  #
   # not planning to create, update or delete projects on device
+  #
+  
+  # register callback with lighthouse API
+  def set_callback(notify_url)
+    log "!LighthouseProjects set_callback with #{notify_url}"
+    
+    projects = ObjectValue.find(:all, :conditions => 
+      ["source_id = ? and update_type = 'query' and attrib = 'name'", @source.id])
+      
+    projects.each do |project|
+      xml_str  = <<-EOT
+      <?xml version="1.0" encoding="UTF-8"?>
+      <callback-handler>
+        <url>#{notify_url}</url>
+        <project-id>#{project.object}</project_id>
+      </callback-handler>
+      EOT
+    
+      uri = URI.parse(base_url)
+      Net::HTTP.start(uri.host) do |http|
+        http.set_debug_output $stderr
+        request = Net::HTTP::Post.new(uri.path + "/callback_handlers.xml", {'Content-type' => 'application/xml'})
+        request.body = xml_str
+        request.basic_auth @source.credential.token, "x"
+        response = http.request(request)
+        # log response.body
+      
+        # case response
+        # when Net::HTTPSuccess, Net::HTTPRedirection
+        #   # OK
+        # else
+        #   raise "Failed to create  ticket"
+        # end
+      end
+    end
+  end
 end

@@ -29,10 +29,6 @@
 class LighthouseTickets < SourceAdapter
   
   include RestAPIHelpers
-    
-  def initialize(source)
-    super
-  end
   
   # login and logoff are left intentionally unimplemented (i.e. we use baseclass implementation) in REST
 
@@ -49,7 +45,7 @@ class LighthouseTickets < SourceAdapter
       projectSource.id])
       
     projects.each do |project|  
-      uri = URI.parse(@source.url)
+      uri = URI.parse(base_url)
       req = Net::HTTP::Get.new("/projects/#{project.object}/tickets.xml?q=all", 'Accept' => 'application/xml')
       req.basic_auth @source.credential.token, "x"
       response = Net::HTTP.start(uri.host,uri.port) do |http|
@@ -65,7 +61,11 @@ class LighthouseTickets < SourceAdapter
   end
 
   def sync
-    log "LighthouseTickets sync, with #{@result.length} results"
+    if @result
+      log "LighthouseTickets sync, with #{@result.length} results"
+    else
+      log "LighthouseTickets sync, ERROR @result nil" and return
+    end
     
     @result.each do |ticket|
       # construct unique ID for ticket, tickets are identified by project-id/number in lighthouse
@@ -75,7 +75,7 @@ class LighthouseTickets < SourceAdapter
       # iterate over all possible values, if the value is not found we just pass "" in to rhosync
       %w(assigned-user-id body closed created-at creator-id milestone-id number priority state tag title updated-at project-id user-id).each do |key|
         value = ticket[key] ? ticket[key][0] : ""
-        add_triple(@source.id, id, key.gsub('-','_'), value)
+        add_triple(@source.id, id, key.gsub('-','_'), value, @source.current_user.id)
         # convert "-" to "_" because "-" is not valid in ruby variable names   
       end    
     end
@@ -91,7 +91,7 @@ class LighthouseTickets < SourceAdapter
     get_params(name_value_list)
     xml_str = xml_template(params)
     
-    uri = URI.parse(@source.url)
+    uri = URI.parse(base_url)
     Net::HTTP.start(uri.host) do |http|
       http.set_debug_output $stderr
       request = Net::HTTP::Post.new(uri.path + "/projects/#{params['project_id']}/tickets.xml", {'Content-type' => 'application/xml'})
@@ -110,7 +110,7 @@ class LighthouseTickets < SourceAdapter
   end
 
   def update(name_value_list)
-    log "LighthouseTickets update"
+    log "++LighthouseTickets update"
     
     get_params(name_value_list)
     complete_missing_params
@@ -118,7 +118,7 @@ class LighthouseTickets < SourceAdapter
 
     xml_str = xml_template(params)
 
-    uri = URI.parse(@source.url)
+    uri = URI.parse(base_url)
     Net::HTTP.start(uri.host) do |http|
       http.set_debug_output $stderr
       request = Net::HTTP::Put.new(uri.path + "/projects/#{project}/tickets/#{number}.xml", {'Content-type' => 'application/xml'})
@@ -137,12 +137,12 @@ class LighthouseTickets < SourceAdapter
 
   # {"id"=>"500/8"}, delete ticket #8 from project #500
   def delete(name_value_list)
-    log "LighthouseTickets delete"
+    log "--LighthouseTickets delete"
     
     get_params(name_value_list)
     project, number = split_id(params['id'])
     
-    uri = URI.parse(@source.url)
+    uri = URI.parse(base_url)
     Net::HTTP.start(uri.host) do |http|
      http.set_debug_output $stderr
      url = uri.path + "/projects/#{project}/tickets/#{number}.xml"

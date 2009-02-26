@@ -1,6 +1,7 @@
 class Source < ActiveRecord::Base
   include SourcesHelper
   has_many :object_values
+  has_many :source_logs
   belongs_to :app
   attr_accessor :source_adapter,:current_user,:credential
 
@@ -13,53 +14,42 @@ class Source < ActiveRecord::Base
     self.priority||=3
   end
   
-  def initadapter
+  def initadapter(credential)
     #create a source adapter with methods on it if there is a source adapter class identified
-    if self.adapter and self.adapter.size>0
-      @source_adapter=(Object.const_get(self.adapter)).new(self)
+    if not self.adapter.blank? 
+      @source_adapter=(Object.const_get(self.adapter)).new(self,credential)
     else # if source_adapter is nil it will
       @source_adapter=nil
     end
   end
+  
+  def ask(current_user,question)
+    usersub=app.memberships.find_by_user_id(current_user.id) if current_user
+    self.credential=usersub.credential if usersub # this variable is available in your source adapter
+    initadapter(self.credential)
+    source_adapter.ask question
+  end
 
   def refresh(current_user)
     @current_user=current_user
-    initadapter
-    # not all endpoints require WSDL! dont do this if you dont see WSDL in the URL (a bit of a hack)
-    @client = SOAP::WSDLDriverFactory.new(url).create_rpc_driver if url and url.size>0 and url=~/wsdl/
-    source_adapter.client=@client if source_adapter
-    # make sure to use @client and @session_id variable in your code that is edited into each source!
-    if source_adapter
-      source_adapter.login  # should set up @session_id
-    else
-      callbinding=eval %"#{prolog};binding"
-    end
-    # also you can get user credentials from credential
+    logger.info "Logged in as: "+ current_user.login if current_user
+    
     usersub=app.memberships.find_by_user_id(current_user.id) if current_user
-    @credential=usersub.credential if usersub # this variable is available in your source adapter
-    # perform core create, update and delete operations
+    self.credential=usersub.credential if usersub # this variable is available in your source adapter
+    initadapter(self.credential)   
+    # make sure to use @client and @session_id variable in your code that is edited into each source!
+    source_adapter.login  # should set up @session_id
     process_update_type('create',createcall)
     process_update_type('update',updatecall)
     process_update_type('delete',deletecall)      
-    # do the query call and sync of records
-    @user_id=User.find_by_login credential.login if credential
-    clear_pending_records
-    if source_adapter
+    clear_pending_records(@credential)
+    begin
       source_adapter.query
-      source_adapter.sync
-    else
-      callbinding=eval(call+";binding",callbinding)
-      callbinding=eval(sync+";binding",callbinding) if sync
-    end 
-    finalize_query_records
-    # now do the logoff
-    if source_adapter
-      source_adapter.logoff
-    else
-      if epilog and epilog.size>0
-        callbinding=eval(epilog+";binding",callbinding)
-      end
+    rescue
     end
+    source_adapter.sync
+    finalize_query_records(@credential)
+    source_adapter.logoff
     save
   end
 

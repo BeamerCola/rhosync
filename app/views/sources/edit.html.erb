@@ -7,7 +7,7 @@
 
   <h2>Editing Source Adapter</h2>
 
-  <% form_for(@source,:url=>{:action=>:update}) do |f| %>
+  <% form_for(@source, :url => {:action=>:update}) do |f| %>
     <%= render :partial => f %>
     <div class="submit"><%= f.submit "Update source adapter code" %></div>
   <% end %>

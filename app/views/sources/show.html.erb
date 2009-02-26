@@ -2,9 +2,9 @@
   <h1><%= h(@source.name) %></h1>
   
   <div class="actions">
-    <%= link_to('Edit source', {:action => 'edit', :id => @source.id, :app_id => @app.id})%>
-    <%= link_to('Refresh records', {:action => 'refresh', :id => @source.id})%>
-    <%= link_to('Create record', {:action => 'newobject', :id => @source.id})%>
+    <%= link_to("Edit source", edit_app_source_path(@app, @source)) %>
+    <%= link_to("Refresh records", {:action => "show", :id => @source.id, :refresh => "1"}) %>
+    <%= link_to("Create record", {:action => "newobject", :id => @source.id}) %>
   </div>
   
   <table class="list">

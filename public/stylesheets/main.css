@@ -42,6 +42,10 @@ div#head .actions {
   top: 1em;
 }
 
+div#head a {
+  color: #fff;
+}
+
 div#content {
   padding: 1em;
   width: 70%;
@@ -110,6 +114,15 @@ dl.form input[type="password"] {
 dl.form textarea {
   font-size: 14px;
   padding: 4px;
+}
+
+fieldset {
+  border: 1px solid #ccc;
+  border-width: 1px 0 0 0;
+}
+
+fieldset.grey {
+  background-color: #efefef;
 }
 
 /* ========== */
